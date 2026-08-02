@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Forhad Driving Center — Certificate Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Inter:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  :root{
+    --maroon:#8C1D24; --maroon-dark:#5C1216; --maroon-deep:#2A0A0D;
+    --gold:#AD8636; --gold-light:#E6CB86;
+    --cream:#FBF6EC; --ink:#241C15; --muted:#6E5E4C;
+    --asphalt:#2E1013; --asphalt-2:#43171B;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html,body{ height:100%; }
+  body{
+    font-family:'Inter',Arial,sans-serif;
+    background:#141010;
+    color:#fff;
+  }
+  h1,h2,h3,p,span,div{ font-family:inherit; }
+  .serif-display{ font-family:'Playfair Display',Georgia,'Times New Roman',serif; }
+  .serif-body{ font-family:'Cormorant Garamond',Georgia,'Times New Roman',serif; }
+  input,select,button{ font-family:inherit; }
+
+  /* layout */
+  .app{ display:flex; flex-direction:column; min-height:100%; }
+  @media (min-width:1024px){ .app{ flex-direction:row; } }
+
+  /* ---------------- form panel ---------------- */
+  .panel{
+    width:100%; flex-shrink:0; padding:28px 24px;
+    background:linear-gradient(180deg,var(--maroon-deep),var(--maroon-dark) 55%,var(--maroon-deep));
+  }
+  @media (min-width:1024px){ .panel{ width:420px; height:100vh; overflow-y:auto; padding:32px; } }
+
+  .brand-eyebrow{ font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold-light); }
+  .brand-title{ font-size:24px; font-weight:800; color:#fff; margin-top:6px; line-height:1.2; }
+  .brand-sub{ font-size:13px; color:rgba(255,255,255,.55); margin-top:6px; }
+
+  .road-rule{
+    height:3px; margin:22px 0;
+    background-image:repeating-linear-gradient(90deg, var(--gold) 0 16px, transparent 16px 28px);
+    opacity:.9;
+  }
+  .road-rule.tight{ margin:16px 0; background-image:repeating-linear-gradient(90deg, var(--gold) 0 10px, transparent 10px 18px); }
+
+  .field{ margin-bottom:18px; }
+  .field-row{ display:flex; gap:12px; margin-bottom:18px; }
+  .field-row .field{ flex:1; margin-bottom:0; }
+  label{ display:block; font-size:11px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:rgba(255,255,255,.7); margin-bottom:6px; }
+  input[type=text], input[type=date], select{
+    width:100%; padding:10px 12px; border-radius:6px; font-size:14px;
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.22); color:#fff;
+  }
+  input::placeholder{ color:rgba(255,255,255,.4); }
+  select option{ color:#111; }
+  input:focus, select:focus{ outline:2px solid var(--gold-light); outline-offset:1px; border-color:transparent; }
+
+  .hours-box{
+    display:flex; align-items:center; justify-content:space-between;
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12);
+    border-radius:6px; padding:11px 13px; font-size:13px; color:rgba(255,255,255,.75);
+  }
+  .hours-box strong{ color:#fff; font-size:14px; }
+  .hint{ font-size:11px; color:rgba(255,255,255,.4); margin-top:6px; }
+
+  .btn{
+    width:100%; padding:13px; border:0; border-radius:6px; font-size:13px; font-weight:700;
+    letter-spacing:.05em; text-transform:uppercase; cursor:pointer; margin-top:10px;
+  }
+  .btn-gold{ background:var(--gold); color:var(--maroon-deep); }
+  .btn-gold:hover{ background:var(--gold-light); }
+  .btn-ghost{ background:transparent; color:rgba(255,255,255,.9); border:1px solid rgba(255,255,255,.28); }
+  .btn-ghost:hover{ background:rgba(255,255,255,.08); }
+  .btn:disabled{ opacity:.6; cursor:default; }
+  .status{ font-size:12px; color:rgba(255,255,255,.5); margin-top:10px; min-height:16px; }
+
+  /* ---------------- preview panel ---------------- */
+  .stage{ flex:1; display:flex; align-items:flex-start; justify-content:center; padding:32px; overflow:auto; }
+  #scaleWrap{
+    position:relative; overflow:hidden;
+    transition:opacity .35s ease; opacity:0;
+  }
+  #scaleWrap.ready{ opacity:1; }
+
+  /* ---------------- certificate ---------------- */
+  #certificate{
+    width:1122px; height:793px; position:absolute; top:0; left:0; transform-origin:top left;
+    background:
+      radial-gradient(circle at 12% 8%, rgba(140,29,36,.05), transparent 40%),
+      radial-gradient(circle at 88% 92%, rgba(140,29,36,.05), transparent 40%),
+      var(--cream);
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.65);
+    overflow:hidden;
+  }
+  #certificate .frame-outer{ position:absolute; inset:20px; border:2px solid var(--maroon); }
+  #certificate .frame-inner{ position:absolute; inset:27px; border:1px solid var(--gold); }
+  .corner{ position:absolute; width:64px; height:64px; border:3px solid var(--gold); }
+  .corner.tl{ top:11px; left:11px; border-right:0; border-bottom:0; }
+  .corner.tr{ top:11px; right:11px; border-left:0; border-bottom:0; }
+  .corner.bl{ bottom:11px; left:11px; border-right:0; border-top:0; }
+  .corner.br{ bottom:11px; right:11px; border-left:0; border-top:0; }
+
+  .watermark{
+    position:absolute; top:50%; left:50%; width:520px; height:520px;
+    transform:translate(-50%,-52%); opacity:.05; pointer-events:none;
+  }
+
+  .cert-body{
+    position:relative; height:100%; display:flex; flex-direction:column; align-items:center;
+    padding:46px 96px 0 96px;
+  }
+
+  .eyebrow{ font-size:11px; letter-spacing:.5em; text-transform:uppercase; color:var(--gold); line-height:1; }
+  .cert-title{
+    font-size:40px; font-weight:800; color:var(--maroon); line-height:1.15; margin-top:14px;
+    text-align:center; letter-spacing:.01em;
+  }
+  .title-rule{ width:170px; height:3px; margin:12px 0; background-image:repeating-linear-gradient(90deg,var(--gold) 0 14px, transparent 14px 24px); }
+  .cert-subtitle{ font-size:21px; font-weight:600; letter-spacing:.16em; text-transform:uppercase; color:var(--ink); line-height:1.3; }
+
+  .lead{ font-size:17px; color:var(--muted); margin-top:30px; line-height:1.4; }
+  .cert-name{
+    font-size:34px; font-weight:700; color:var(--maroon-dark); line-height:1.3;
+    margin-top:6px; padding:2px 28px 8px 28px; border-bottom:1.5px solid var(--maroon);
+    min-width:440px; text-align:center;
+  }
+  .cert-parents{ font-size:14.5px; color:var(--muted); margin-top:10px; line-height:1.4; }
+
+  .cert-desc{
+    font-size:16.5px; color:var(--ink); text-align:center; max-width:740px; margin-top:20px; line-height:1.65;
+  }
+
+  .stat-row{ display:flex; gap:28px; margin-top:26px; width:100%; max-width:760px; justify-content:center; }
+  .stat{ text-align:center; min-width:150px; }
+  .stat-label{ font-size:10.5px; letter-spacing:.16em; text-transform:uppercase; color:var(--gold); line-height:1; }
+  .stat-value{ font-size:16px; font-weight:700; color:var(--ink); margin-top:6px; line-height:1.3; }
+
+  .sign-row{
+    width:100%; max-width:900px; display:flex; align-items:flex-end; justify-content:space-between;
+    margin-top:34px; padding-bottom:6px;
+  }
+  .sign-block{ width:190px; text-align:center; }
+  .sign-name{ font-family:'Cormorant Garamond',Georgia,serif; font-style:italic; font-size:20px; color:var(--maroon-dark); line-height:1.3; }
+  .sign-line{ border-top:1px solid var(--ink); margin-top:8px; padding-top:6px; }
+  .sign-label{ font-size:10.5px; letter-spacing:.15em; text-transform:uppercase; color:var(--muted); line-height:1.3; }
+
+  .seal{
+    width:112px; height:112px; border-radius:50%; flex-shrink:0; margin-bottom:-2px;
+    background:radial-gradient(circle at 34% 28%, #d1a94a, #8a6a1e 72%, #6a5015 100%);
+    border:3px solid var(--gold-light);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 6px 16px rgba(0,0,0,.35), inset 0 0 0 3px rgba(255,255,255,.15);
+  }
+  .seal-inner{
+    width:90px; height:90px; border-radius:50%; border:1.5px dashed rgba(255,255,255,.6);
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+  }
+  .seal-inner span{ font-size:7.5px; letter-spacing:.16em; color:rgba(255,255,255,.85); margin-top:4px; line-height:1.2; }
+
+  .highway{
+    width:100%; height:26px; margin-top:16px; position:relative;
+    background:linear-gradient(180deg, var(--asphalt-2), var(--asphalt));
+    display:flex; align-items:center; overflow:hidden; border-radius:2px;
+  }
+  .highway::before{
+    content:""; position:absolute; left:0; right:0; top:50%; height:2.5px; transform:translateY(-50%);
+    background-image:repeating-linear-gradient(90deg,var(--gold-light) 0 20px, transparent 20px 36px);
+  }
+  .plate{
+    position:relative; z-index:1; margin:0 auto; background:var(--cream); border:1.5px solid var(--gold);
+    border-radius:3px; padding:2px 16px; font-family:'Inter',Arial,sans-serif; font-weight:700;
+    font-size:11.5px; letter-spacing:.05em; color:var(--maroon-dark); white-space:nowrap;
+  }
+  .foot-row{
+    width:100%; max-width:900px; display:flex; justify-content:space-between; padding:9px 0 20px 0; font-size:11px; color:var(--muted);
+  }
+  .foot-row b{ color:var(--ink); }
+
+  @media print{
+    @page{ size:A4 landscape; margin:0; }
+    html,body{ margin:0; background:#fff !important; }
+    body *{ visibility:hidden; }
+    #certificate, #certificate *{ visibility:visible; }
+    #certificate{ position:absolute !important; top:0; left:0; width:297mm !important; height:210mm !important; transform:none !important; box-shadow:none; margin:0; }
+    #scaleWrap{ position:static !important; width:auto !important; height:auto !important; transform:none !important; opacity:1 !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ================= FORM PANEL ================= -->
+  <aside class="panel">
+    <p class="brand-eyebrow">Est. 2019</p>
+    <h1 class="brand-title serif-display">Forhad Driving Center</h1>
+    <p class="brand-sub">Certificate of Completion — Generator</p>
+
+    <div class="road-rule"></div>
+
+    <form id="certForm">
+      <div class="field">
+        <label for="studentName">Trainee's Full Name</label>
+        <input type="text" id="studentName" placeholder="e.g. Md Saqlain Zaman" required />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="fatherName">Father's Name</label>
+          <input type="text" id="fatherName" placeholder="Father's name" />
+        </div>
+        <div class="field">
+          <label for="motherName">Mother's Name</label>
+          <input type="text" id="motherName" placeholder="Mother's name" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="vehicleType">Vehicle Type</label>
+        <select id="vehicleType">
+          <option value="Manual Car (LMV)">Manual Car (LMV)</option>
+          <option value="Automatic Car (LMV)">Automatic Car (LMV)</option>
+          <option value="Motorcycle">Motorcycle</option>
+          <option value="Heavy Vehicle (HMV)">Heavy Vehicle (HMV)</option>
+        </select>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="startDate">Start Date</label>
+          <input type="date" id="startDate" />
+        </div>
+        <div class="field">
+          <label for="endDate">End Date</label>
+          <input type="date" id="endDate" />
+        </div>
+      </div>
+
+      <div class="hours-box">
+        <span>Auto-calculated training hours</span>
+        <strong id="hoursPreview">— Hours</strong>
+      </div>
+      <p class="hint">Based on 30 minutes of class per selected day.</p>
+
+      <div class="road-rule tight"></div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="certNo">Certificate No.</label>
+          <input type="text" id="certNo" />
+        </div>
+        <div class="field">
+          <label for="issueDate">Issue Date</label>
+          <input type="date" id="issueDate" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="licenseNo">Center License No.</label>
+        <input type="text" id="licenseNo" placeholder="e.g. DTC-LIC-2019-0452" />
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="instructorName">Instructor</label>
+          <input type="text" id="instructorName" value="Sagar Ahmed" />
+        </div>
+        <div class="field">
+          <label for="directorName">Director</label>
+          <input type="text" id="directorName" value="Forhad Ahmed" />
+        </div>
+      </div>
+    </form>
+
+    <div class="road-rule"></div>
+
+    <button id="downloadBtn" class="btn btn-gold">Download PDF</button>
+    <p class="hint" style="margin-top:8px;">Print dialog khulbe — Destination-e "Save as PDF" select korun (A4, Landscape already set).</p>
+  </aside>
+
+  <!-- ================= PREVIEW PANEL ================= -->
+  <main class="stage">
+    <div id="scaleWrap">
+      <div id="certificate">
+        <div class="frame-outer"></div>
+        <div class="frame-inner"></div>
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+
+        <svg class="watermark" viewBox="0 0 100 100" fill="none" stroke="#8C1D24" stroke-width="1.4">
+          <circle cx="50" cy="50" r="42"/>
+          <circle cx="50" cy="50" r="5" fill="#8C1D24" stroke="none"/>
+          <path d="M50 8v26M50 66v26M8 50h26M66 50h26M20.7 20.7l18.4 18.4M60.9 60.9l18.4 18.4M79.3 20.7L60.9 39.1M39.1 60.9L20.7 79.3"/>
+        </svg>
+
+        <div class="cert-body">
+          <p class="eyebrow">Established 2019</p>
+          <h1 class="cert-title serif-display">FORHAD DRIVING CENTER</h1>
+          <div class="title-rule"></div>
+          <h2 class="cert-subtitle serif-display">Certificate of Completion</h2>
+
+          <p class="lead serif-body">This is to certify that</p>
+          <p id="cName" class="cert-name serif-display">Student Name</p>
+          <p id="cParents" class="cert-parents serif-body"></p>
+
+          <p class="cert-desc serif-body">
+            has successfully completed the <strong>Professional Driving Training Course</strong>, having demonstrated
+            satisfactory knowledge of road safety, traffic rules, vehicle control, parking, and safe driving practices.
+          </p>
+
+          <div class="stat-row">
+            <div class="stat">
+              <p class="stat-label">Vehicle Type</p>
+              <p id="cVehicle" class="stat-value">Manual Car (LMV)</p>
+            </div>
+            <div class="stat">
+              <p class="stat-label">Duration</p>
+              <p id="cDuration" class="stat-value">—</p>
+            </div>
+            <div class="stat">
+              <p class="stat-label">Training Hours</p>
+              <p id="cHours" class="stat-value">— Hours</p>
+            </div>
+          </div>
+
+          <div class="sign-row">
+            <div class="sign-block">
+              <p id="cInstructor" class="sign-name">Sagar Ahmed</p>
+              <div class="sign-line"><p class="sign-label">Instructor Signature</p></div>
+            </div>
+
+            <div class="seal">
+              <div class="seal-inner">
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.4">
+                  <circle cx="12" cy="12" r="9"/>
+                  <circle cx="12" cy="12" r="1.6" fill="#fff" stroke="none"/>
+                  <path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>
+                </svg>
+                <span>FDC · AUTHORIZED</span>
+              </div>
+            </div>
+
+            <div class="sign-block">
+              <p id="cDirector" class="sign-name">Forhad Ahmed</p>
+              <div class="sign-line"><p class="sign-label">Director Signature</p></div>
+            </div>
+          </div>
+
+          <div class="highway">
+            <div class="plate">LICENSE NO: <span id="cLicenseNo">DTC-LIC-2019-0452</span></div>
+          </div>
+
+          <div class="foot-row">
+            <span>Certificate No: <b id="cCertNo">DTC-2026-0001</b></span>
+            <span>Issue Date: <b id="cIssueDate">—</b></span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  function fmtDate(dateStr){
+    if(!dateStr) return '—';
+    const d = new Date(dateStr + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' });
+  }
+  function fmtHours(days){
+    const hours = days * 0.5;
+    return (Number.isInteger(hours) ? hours : hours.toFixed(1)) + ' Hours';
+  }
+  function daysBetween(startStr, endStr){
+    if(!startStr || !endStr) return 0;
+    const start = new Date(startStr + 'T00:00:00');
+    const end = new Date(endStr + 'T00:00:00');
+    const diff = Math.round((end - start) / 86400000) + 1;
+    return diff > 0 ? diff : 0;
+  }
+  function randomCertNo(){
+    const year = new Date().getFullYear();
+    const rand = Math.floor(1 + Math.random() * 9998).toString().padStart(4, '0');
+    return `DTC-${year}-${rand}`;
+  }
+  function setDefaults(){
+    const today = new Date().toISOString().slice(0,10);
+    $('issueDate').value = today;
+    $('certNo').value = randomCertNo();
+    $('licenseNo').value = 'DTC-LIC-2019-0452';
+  }
+
+  function render(){
+    const name = $('studentName').value.trim() || 'Student Name';
+    const father = $('fatherName').value.trim();
+    const mother = $('motherName').value.trim();
+    const vehicle = $('vehicleType').value;
+    const start = $('startDate').value;
+    const end = $('endDate').value;
+    const certNo = $('certNo').value.trim() || '—';
+    const issueDate = $('issueDate').value;
+    const licenseNo = $('licenseNo').value.trim() || 'DTC-LIC-2019-0452';
+    const instructor = $('instructorName').value.trim() || 'Sagar Ahmed';
+    const director = $('directorName').value.trim() || 'Forhad Ahmed';
+
+    const days = daysBetween(start, end);
+    const hoursText = days > 0 ? fmtHours(days) : '— Hours';
+
+    $('cName').textContent = name;
+
+    let parentsText = '';
+    if(father && mother) parentsText = `Son/Daughter of ${father} & ${mother}`;
+    else if(father) parentsText = `Son/Daughter of ${father}`;
+    else if(mother) parentsText = `Son/Daughter of ${mother}`;
+    $('cParents').textContent = parentsText;
+
+    $('cVehicle').textContent = vehicle;
+    $('cDuration').textContent = (start && end) ? `${fmtDate(start)} – ${fmtDate(end)}` : '—';
+    $('cHours').textContent = hoursText;
+    $('cCertNo').textContent = certNo;
+    $('cLicenseNo').textContent = licenseNo;
+    $('cIssueDate').textContent = fmtDate(issueDate);
+    $('cInstructor').textContent = instructor;
+    $('cDirector').textContent = director;
+    $('hoursPreview').textContent = hoursText;
+  }
+
+  document.getElementById('certForm').addEventListener('input', render);
+
+  async function waitForFonts(){
+    try{
+      if(document.fonts && document.fonts.ready){
+        await Promise.race([
+          document.fonts.ready,
+          new Promise(res => setTimeout(res, 2500)) // safety timeout
+        ]);
+      }
+    }catch(e){ /* ignore, proceed anyway */ }
+  }
+
+  $('downloadBtn').addEventListener('click', async () => {
+    await waitForFonts();
+    document.title = ($('studentName').value.trim() || 'Certificate') + ' - Forhad Driving Center';
+    window.print();
+  });
+
+  function scalePreview(){
+    const wrap = $('scaleWrap');
+    const cert = $('certificate');
+    const isDesktop = window.innerWidth >= 1024;
+    const available = isDesktop ? (window.innerWidth - 420 - 64) : (window.innerWidth - 48);
+    const scale = Math.min(0.72, Math.max(0.28, available / 1122));
+    cert.style.transform = `scale(${scale})`;
+    wrap.style.width = (1122 * scale) + 'px';
+    wrap.style.height = (793 * scale) + 'px';
+  }
+  window.addEventListener('resize', scalePreview);
+
+  (async function init(){
+    setDefaults();
+    render();
+    scalePreview();
+    await waitForFonts();
+    scalePreview();
+    $('scaleWrap').classList.add('ready');
+  })();
+</script>
+
+</body>
+</html>
