@@ -180,18 +180,42 @@
   }
   .foot-row b{ color:var(--ink); }
 
+  /* ================= PRINT (fixed: single page + crisp output) =================
+     Root causes fixed:
+     1) Old code used visibility:hidden on everything except the certificate.
+        visibility:hidden still keeps the element's LAYOUT SPACE, so the tall
+        left form-panel pushed total document height past one page -> 2nd blank page.
+        Fix: display:none on .panel (removes it from layout completely).
+     2) Old code forced #certificate to 297mm x 210mm ("A4 landscape") while the
+        certificate itself is built at 1122px x 793px. 1122px/96dpi = 11.6875in
+        (296.8mm) and 793px/96dpi = 8.2604in (209.9mm) -- NOT exactly 297mm x 210mm.
+        That tiny mismatch forced Chrome to rescale/resample the whole page when
+        printing, which is what caused the blur / pixelation on zoom.
+        Fix: set @page and #certificate to the EXACT inch equivalent of the
+        1122x793 px canvas, so nothing gets rescaled -> sharp vector output. */
   @media print{
-    @page{ size:A4 landscape; margin:0; }
-    html,body{ margin:0; background:#fff !important; }
+    @page{ size: 11.6875in 8.2604in; margin:0; }
+    html,body{ margin:0; padding:0; background:#fff !important; height:auto !important; }
     * {
       -webkit-print-color-adjust: exact !important;
       print-color-adjust: exact !important;
       color-adjust: exact !important;
     }
-    body *{ visibility:hidden; }
-    #certificate, #certificate *{ visibility:visible; }
-    #certificate{ position:absolute !important; top:0; left:0; width:297mm !important; height:210mm !important; transform:none !important; box-shadow:none; margin:0; }
-    #scaleWrap{ position:static !important; width:auto !important; height:auto !important; transform:none !important; opacity:1 !important; }
+    .panel{ display:none !important; }
+    .app{ display:block !important; min-height:0 !important; }
+    .stage{
+      display:block !important; padding:0 !important; margin:0 !important;
+      overflow:visible !important; min-height:0 !important;
+    }
+    #scaleWrap{
+      position:static !important; width:auto !important; height:auto !important;
+      transform:none !important; opacity:1 !important; overflow:visible !important;
+    }
+    #certificate{
+      position:relative !important; top:0; left:0;
+      width:11.6875in !important; height:8.2604in !important;
+      transform:none !important; box-shadow:none !important; margin:0 !important;
+    }
   }
 </style>
 </head>
@@ -284,7 +308,7 @@
     <div class="road-rule"></div>
 
     <button id="downloadBtn" class="btn btn-gold">Download PDF</button>
-    <p class="hint" style="margin-top:8px;">Print dialog khulbe — Destination-e "Save as PDF" select korun. "More settings" e "Background graphics" option ON thakle colors thik ashbe.</p>
+    <p class="hint" style="margin-top:8px;">Print dialog khulbe — Destination-e "Save as PDF" select korun. "More settings" e "Background graphics" ON ebong "Margins: None", "Scale: 100/Default" rakhun (Fit-to-page na dile blur hobe na).</p>
   </aside>
 
   <!-- ================= PREVIEW PANEL ================= -->
